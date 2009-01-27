@@ -32,7 +32,7 @@ dump_pid() {
 		local NAME=".$3"
 	fi
 
-	dvbsnoop $PID -timeout 5000 -tn -ph 0 -n 1 >scan.${CHANNEL}.pid${PID}${NAME}
+	dvbsnoop $PID -timeout 10000 -tn -ph 0 -n 1 >scan.${CHANNEL}.pid${PID}${NAME}
 }
 
 scan_one() {
