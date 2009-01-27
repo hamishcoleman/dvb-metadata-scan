@@ -1,0 +1,61 @@
+#!/bin/bash
+#
+# This script is intended to autoscan all DVB services and produce text dump
+# output of the details found
+#
+# Currently only DVB-T and using hardcoded frequencies
+
+MULTIPLEXES=" \
+	abc1.free.au \
+	seven.free.au \
+	nine.free.au \
+	ten.free.au \
+	sbs.free.au \
+"
+
+tzap_start() {
+	local CHANNEL="$1"
+
+	tzap $CHANNEL >/dev/null 2>&1 &
+	TZAP_PID=$!
+	sleep 5s
+}
+
+tzap_stop() {
+	kill $TZAP_PID
+}
+
+dump_pid() {
+	local CHANNEL="$1"
+	local PID="$2"
+	if [ -n "$3" ]; then
+		local NAME=".$3"
+	fi
+
+	dvbsnoop $PID -timeout 5000 -tn -ph 0 -n 1 >scan.${CHANNEL}.pid${PID}${NAME}
+}
+
+scan_one() {
+	local CHANNEL="$1"
+
+	dump_pid $CHANNEL 0x0000 PAT
+	dump_pid $CHANNEL 0x0001 CAT
+	dump_pid $CHANNEL 0x0010 NIT
+	dump_pid $CHANNEL 0x0011 SDT
+	#dump_pid $CHANNEL 0x0015
+
+	# scan the program pids
+	PMTS=`grep Program_map_PID scan.${CHANNEL}.pid0x0000.PAT | cut -d"(" -f2 | cut -d")" -f1`
+	for i in $PMTS; do
+		dump_pid $CHANNEL $i PMT
+	done
+}
+
+killall tzap >/dev/null
+
+for i in $MULTIPLEXES; do
+	echo TRY $i
+	tzap_start ${i}
+	scan_one $i
+	tzap_stop
+done
