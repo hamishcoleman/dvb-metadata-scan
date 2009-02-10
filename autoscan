@@ -13,15 +13,20 @@ MULTIPLEXES=" \
 	sbs.free.au \
 "
 
+LOGFILE=autoscan.log
+>$LOGFILE
+
 tzap_start() {
 	local CHANNEL="$1"
 
-	tzap $CHANNEL >/dev/null 2>&1 &
+	echo LOG tzap_start $CHANNEL >>$LOGFILE
+	tzap $CHANNEL >>$LOGFILE 2>&1 &
 	TZAP_PID=$!
 	sleep 5s
 }
 
 tzap_stop() {
+	echo LOG tzap_stop >>$LOGFILE
 	kill $TZAP_PID
 }
 
@@ -32,6 +37,7 @@ dump_pid() {
 		local NAME=".$3"
 	fi
 
+	echo LOG dump_pid $CHANNEL $PID $NAME >>$LOGFILE
 	dvbsnoop $PID -timeout 10000 -tn -ph 0 -n 1 >scan.${CHANNEL}.pid${PID}${NAME}
 }
 
