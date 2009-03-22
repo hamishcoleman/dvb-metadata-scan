@@ -38,7 +38,7 @@ dump_pid() {
 	fi
 
 	echo LOG dump_pid $CHANNEL $PID $NAME >>$LOGFILE
-	dvbsnoop $PID -timeout 10000 -tn -ph 0 -n 1 >scan.${CHANNEL}.pid${PID}${NAME}
+	dvbsnoop $PID -timeout 10000 -tn -ph 0 -n 1 -crc >scan.${CHANNEL}.pid${PID}${NAME}
 }
 
 scan_one() {
