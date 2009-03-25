@@ -44,6 +44,10 @@ dump_pid() {
 scan_one() {
 	local CHANNEL="$1"
 
+	# TODO - dump a processed feinfo ??
+
+	dvbsnoop -s pidscan >scan.${CHANNEL}.pidscan
+
 	dump_pid $CHANNEL 0x0000 PAT
 	dump_pid $CHANNEL 0x0001 CAT
 	dump_pid $CHANNEL 0x0010 NIT
@@ -54,6 +58,8 @@ scan_one() {
 	PMTS=`grep Program_map_PID scan.${CHANNEL}.pid0x0000.PAT | cut -d"(" -f2 | cut -d")" -f1`
 	for i in $PMTS; do
 		dump_pid $CHANNEL $i PMT
+
+		# TODO - read the PMT files and generate a channel PID list
 	done
 }
 
