@@ -1,0 +1,187 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+#
+# Reads a set of dvbsnoop decode text files on input and outputs a summary
+#
+
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Sortkeys = 1;
+
+sub stream_type_to_str($$$) {
+	my ($stream_type,$desctag,$descriptor) = @_;
+
+# From the dvbsnoop output:
+# (0x02)  [= ITU-T Rec. H.262 | ISO/IEC 13818-2 Video | ISO/IEC 11172-2 constr. parameter video stream] 
+#	MPEG-DescriptorTag: 2 (0x02)  [= video_stream_descriptor]
+# (0x03)  [= ISO/IEC 11172 Audio]
+# (0x04)  [= ISO/IEC 13818-3 Audio]
+#	MPEG-DescriptorTag: 3 (0x03)  [= audio_stream_descriptor]
+# (0x05)  [= ITU-T Rec. H.222.0 | ISO/IEC 13818-1 private sections]
+#	MPEG-DescriptorTag: 15 (0x0f)  [= private_data_indicator_descriptor]
+#	DVB-DescriptorTag: 111 (0x6f)  [= application_signalling_descriptor]
+# (0x06)  [= ITU-T Rec. H.222.0 | ISO/IEC 13818-1 PES packets containing private data]
+#	DVB-DescriptorTag: 86 (0x56)  [= teletext_descriptor]
+#	DVB-DescriptorTag: 106 (0x6a)  [= AC3_descriptor]
+#	DVB-DescriptorTag: 195 (0xc3)  [= User defined]
+# (0x0b)  [= ISO/IEC 13818-6 DSM-CC U-N Messages]
+
+	if ($stream_type eq '0x02') {
+		return 'video';
+	}
+	if ($stream_type eq '0x03') {
+		return 'audio';
+	}
+	if ($stream_type eq '0x04') {
+		return 'audio';
+	}
+	if ($stream_type eq '0x05') {
+		if ($descriptor eq '0x0f') {
+			return 'private_data';
+		}
+		if ($descriptor eq '0x6f') {
+			return 'application_signalling';
+		}
+		return undef;
+	}
+	if ($stream_type eq '0x06') {
+		if ($descriptor eq '0x56') {
+			return 'teletext';
+		}
+		if ($descriptor eq '0x6a') {
+			return 'AC3';
+		}
+		if ($descriptor eq '0xc3') {
+			return 'User_defined';
+		}
+		return undef;
+	}
+	if ($stream_type eq '0x0b') {
+		return 'DSM-CC';
+	}
+	return undef;
+}
+
+
+# Store our summary info
+my $db={};
+
+# Store information found on previous input lines
+my $found={};
+
+while (<>) {
+	chomp;
+
+	if (m/^PID:\s(\d+)/) {
+		$found->{pid} = $1;
+		next;
+	}
+
+	if (m/^    Program_number: (\d+) \((0x[[:xdigit:]]{4})\)/) {
+		$found->{program_number} = $2;
+		next;
+	}
+
+	if (m/^    (Network_PID|Program_map_PID): (\d+) \((0x[[:xdigit:]]{4})\)/) {
+		my $pid = $3;
+
+		my $usage;
+		if ($1 eq 'Network_PID') {
+			$usage = 'NIT';
+		} else {
+			$usage = 'PMT';
+		}
+
+		my $program_number = $found->{program_number};
+		delete $found->{program_number};
+
+		$db->{program}{$program_number}{pid}{$usage}=$pid;
+		$db->{pid}{$pid}{program}=$program_number;
+		$db->{pid}{$pid}{usage}=$usage;
+		$db->{pid}{$pid}{used}++;
+		next;
+	} 
+
+	if (m/^        Network_name: "([^"]+)"/) {
+		$db->{global}{network_name}=$1;
+		next;
+	}
+
+	if (m/^    Service_id: (\d+) \((0x[[:xdigit:]]{4})\)/) {
+		$found->{program_number} = $2;
+		next;
+	}
+
+	if (m/^            service_provider_name: "([^"]+)"/) {
+		$db->{program}{$found->{program_number}}{Service_provider}=$1;
+		next;
+	}
+	if (m/^            Service_name: "([^"]+)"/) {
+		my $program_number = $found->{program_number};
+		delete $found->{program_number};
+
+		$db->{program}{$program_number}{Service_name}=$1;
+		next;
+	}
+
+	if (m/^Program_number: (\d+) \((0x[[:xdigit:]]{4})\)/) {
+		$found->{program_number} = $2;
+		next;
+	}
+
+	if (m/^PCR PID: (\d+) \((0x[[:xdigit:]]{4})\)/) {
+		my $program_number = $found->{program_number};
+
+		$db->{program}{$program_number}{pid}{PCR}=$2;
+		$db->{pid}{$2}{program}=$program_number;
+		$db->{pid}{$2}{usage}='PCR';
+		$db->{pid}{$2}{used}++;
+		next;
+	}
+
+	if (m/^    Stream_type: (\d+) \((0x[[:xdigit:]]{2})\)/) {
+		$found->{Stream_type}=$2;
+		next;
+	}
+
+	if (m/^    Elementary_PID: (\d+) \((0x[[:xdigit:]]{4})\)/) {
+		$found->{Elementary_PID}=$2;
+		next;
+	}
+
+	if (m/^            (MPEG-DescriptorTag|DVB-DescriptorTag): (\d+) \((0x[[:xdigit:]]{2})\)/) {
+		my $program_number = $found->{program_number};
+		my $stream_type = $found->{Stream_type};
+		my $pid = $found->{Elementary_PID};
+
+		next if !$pid or !$stream_type or !$program_number;
+
+		$db->{pid}{$pid}{program}=$program_number;
+		$db->{pid}{$pid}{Stream_type}=$stream_type;
+		$db->{pid}{$pid}{DescriptorTag}=$3;
+		$db->{pid}{$pid}{used}++;
+
+		my $type = stream_type_to_str($stream_type,$1,$3);
+
+		if ($type) {
+			$db->{program}{$program_number}{pid}{$type}=$pid;
+			$db->{pid}{$pid}{usage}=$type;
+
+			delete $db->{program}{$program_number}{pid}{$stream_type};
+			delete $found->{Stream_type};
+			delete $found->{Elementary_PID};
+		} else {
+			$db->{program}{$program_number}{pid}{$stream_type}=$pid;
+			$db->{pid}{$pid}{usage}=$stream_type;
+		}
+		next;
+	}
+
+	if (m/^PID found:\s+(\d+) \((0x[[:xdigit:]]{4})\)/) {
+		$db->{pid}{$2}{used}++;
+	}
+}
+
+print Dumper($db);
+
