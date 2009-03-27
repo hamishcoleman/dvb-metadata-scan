@@ -61,6 +61,8 @@ scan_one() {
 
 		# TODO - read the PMT files and generate a channel PID list
 	done
+
+	./summarise_dvbsnoop scan.${CHANNEL}.pid* >scan.${CHANNEL}.summary
 }
 
 multiplex() {
