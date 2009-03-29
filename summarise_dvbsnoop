@@ -178,6 +178,34 @@ while (<>) {
 		next;
 	}
 
+	if (m/^    ES_info_length: 0 /) {
+		my $program_number = $found->{program_number};
+		my $stream_type = $found->{Stream_type};
+		delete $found->{Stream_type};
+		my $pid = $found->{Elementary_PID};
+		delete $found->{Elementary_PID};
+
+		next if !$pid or !$stream_type or !$program_number;
+
+		$db->{pid}{$pid}{program}=$program_number;
+		$db->{pid}{$pid}{Stream_type}=$stream_type;
+		$db->{pid}{$pid}{used}++;
+
+		my $type = stream_type_to_str($stream_type,undef,undef);
+
+		if ($type) {
+			$db->{program}{$program_number}{pid}{$type}=$pid;
+			$db->{pid}{$pid}{usage}=$type;
+
+			delete $db->{program}{$program_number}{pid}{$stream_type};
+		} else {
+			$db->{program}{$program_number}{pid}{$stream_type}=$pid;
+			$db->{pid}{$pid}{usage}=$stream_type;
+		}
+		next;
+	}
+
+
 	if (m/^PID found:\s+(\d+) \((0x[[:xdigit:]]{4})\)/) {
 		$db->{pid}{$2}{used}++;
 	}
