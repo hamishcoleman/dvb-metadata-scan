@@ -46,7 +46,12 @@ scan_one() {
 
 	# TODO - dump a processed feinfo ??
 
-	dvbsnoop -s pidscan >scan.${CHANNEL}.pidscan
+	dvbsnoop -s pidscan |
+		sed -e '
+			s/\(SECTION: DSM-CC\) - .*/\1 ...\]/;
+			s/\(SECTION: Event Information Table (EIT)\) - .*/\1 ...\]/;
+			s/\(SECTION: Time\) .*/\1 ...\]/;
+		' >scan.${CHANNEL}.pidscan
 
 	dump_pid $CHANNEL 0x0000 PAT
 	dump_pid $CHANNEL 0x0001 CAT
