@@ -99,7 +99,6 @@ while (<>) {
 		$db->{program}{$program_number}{pid}{$usage}=$pid;
 		$db->{pid}{$pid}{program}=$program_number;
 		$db->{pid}{$pid}{usage}=$usage;
-		$db->{pid}{$pid}{used}++;
 		next;
 	} 
 
@@ -136,7 +135,6 @@ while (<>) {
 		$db->{program}{$program_number}{pid}{PCR}=$2;
 		$db->{pid}{$2}{program}=$program_number;
 		$db->{pid}{$2}{usage}='PCR';
-		$db->{pid}{$2}{used}++;
 		next;
 	}
 
@@ -160,7 +158,6 @@ while (<>) {
 		$db->{pid}{$pid}{program}=$program_number;
 		$db->{pid}{$pid}{Stream_type}=$stream_type;
 		$db->{pid}{$pid}{DescriptorTag}=$3;
-		$db->{pid}{$pid}{used}++;
 
 		my $type = stream_type_to_str($stream_type,$1,$3);
 
@@ -189,7 +186,6 @@ while (<>) {
 
 		$db->{pid}{$pid}{program}=$program_number;
 		$db->{pid}{$pid}{Stream_type}=$stream_type;
-		$db->{pid}{$pid}{used}++;
 
 		my $type = stream_type_to_str($stream_type,undef,undef);
 
@@ -205,10 +201,6 @@ while (<>) {
 		next;
 	}
 
-
-	if (m/^PID found:\s+(\d+) \((0x[[:xdigit:]]{4})\)/) {
-		$db->{pid}{$2}{used}++;
-	}
 }
 
 print Dumper($db);
