@@ -98,7 +98,7 @@ while (<>) {
 		delete $found->{program_number};
 
 		$db->{program}{$program_number}{pid}{$usage}=$pid;
-		$db->{pid}{$pid}{program}=$program_number;
+		$db->{pid}{$pid}{programs}{$program_number}++;
 		$db->{pid}{$pid}{usage}=$usage;
 		next;
 	} 
@@ -134,7 +134,7 @@ while (<>) {
 		my $program_number = $found->{program_number};
 
 		$db->{program}{$program_number}{pid}{PCR}=$2;
-		$db->{pid}{$2}{program}=$program_number;
+		$db->{pid}{$2}{programs}{$program_number}++;
 		$db->{pid}{$2}{usage}='PCR';
 		next;
 	}
@@ -156,7 +156,7 @@ while (<>) {
 
 		next if !$pid or !$stream_type or !$program_number;
 
-		$db->{pid}{$pid}{program}=$program_number;
+		$db->{pid}{$pid}{programs}{$program_number}++;
 		$db->{pid}{$pid}{Stream_type}=$stream_type;
 		$db->{pid}{$pid}{DescriptorTag}=$3;
 
@@ -185,7 +185,7 @@ while (<>) {
 
 		next if !$pid or !$stream_type or !$program_number;
 
-		$db->{pid}{$pid}{program}=$program_number;
+		$db->{pid}{$pid}{programs}{$program_number}++;
 		$db->{pid}{$pid}{Stream_type}=$stream_type;
 
 		my $type = stream_type_to_str($stream_type,undef,undef);
