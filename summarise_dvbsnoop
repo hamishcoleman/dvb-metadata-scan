@@ -235,6 +235,9 @@ while (<>) {
 
 		next if !$pid or !$stream_type or !$program_number;
 
+		# FIXME - this is wrong, since it doesnt handle multiple
+		# descriptortags overwriting each others details in db->
+
 		$db->{pid}{$pid}{programs}{$program_number}++;
 		$db->{pid}{$pid}{Stream_type}=$stream_type;
 		$db->{pid}{$pid}{DescriptorTag}=$3;
@@ -265,7 +268,10 @@ while (<>) {
 		$db->{global}{maximum_bitrate}+=$3;
 	}
 
+	# *.PMT
 	if (m/^    ES_info_length: 0 /) {
+		# TODO - this is not found in any current stream (20100720)
+		# is there a reason to keep it, what is it supposed to do?
 		my $program_number = $found->{program_number};
 		my $stream_type = $found->{Stream_type};
 		delete $found->{Stream_type};
