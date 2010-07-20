@@ -43,6 +43,9 @@ dump_pid() {
 
 	# Remove CRC as it will change every single time
 	perl -p -i -e 's/^CRC: \d+ \(0x[0-9A-Fa-f]+\)/CRC: __REMOVED__/' $OUT
+
+	# Version number is interesting to note, but ultimately useless
+	perl -p -i -e 's/^Version_number: \d+ \(0x[0-9A-Fa-f]+\)/Version_number: __REMOVED__/' $OUT
 }
 
 scan_one() {
