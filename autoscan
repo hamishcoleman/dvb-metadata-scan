@@ -11,6 +11,7 @@ MULTIPLEXES=" \
 	nine.free.au \
 	ten.free.au \
 	sbs.free.au \
+	c31.free.au \
 "
 
 LOGFILE=autoscan.log
