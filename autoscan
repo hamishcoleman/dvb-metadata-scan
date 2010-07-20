@@ -20,7 +20,7 @@ tzap_start() {
 	local CHANNEL="$1"
 
 	echo LOG tzap_start $CHANNEL >>$LOGFILE
-	tzap $CHANNEL >>$LOGFILE 2>&1 &
+	tzap -c channels.conf $CHANNEL >>$LOGFILE 2>&1 &
 	TZAP_PID=$!
 	sleep 5s
 }
