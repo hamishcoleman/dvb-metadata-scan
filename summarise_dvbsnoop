@@ -71,6 +71,11 @@ my $db={};
 # Store information found on previous input lines
 my $found={};
 
+# TODO - accept cmdline argument defining the global name for this set of
+# files, then move almost all db data into a namespace defined by this.
+# This would allow the merging of the summary files from different stations.
+# The db->shared namespace is shared amongst all stations
+
 while (<>) {
 	chomp;
 
@@ -112,6 +117,58 @@ while (<>) {
 		next;
 	}
 
+	# *0x0010.NIT
+	# frequency we are listening to
+	if (m/^            Center frequency: (0x[[:xdigit:]]{8}) \(= (\d{6}.\d{3}) kHz\)/) {
+		$db->{global}{center_frequency}=$2;
+		$db->{shared}{frequency}{$2}{seen}++;
+		$found->{frequency}=$2;
+		next;
+	}
+
+	# *0x0010.NIT
+	if (m/^            Bandwidth: (\d+) \((0x[[:xdigit:]]{2})\)  \[= (\d+) MHz\]/) {
+		next if !$found->{frequency};
+		$db->{shared}{frequency}{$found->{frequency}}{bandwidth}=$3;
+		next;
+	}
+
+	# *0x0010.NIT
+	if (m/^            Constellation: (\d+) \((0x[[:xdigit:]]{2})\)  \[= (\S+)\]/) {
+		next if !$found->{frequency};
+		$db->{shared}{frequency}{$found->{frequency}}{constellation}=$3;
+		next;
+	}
+
+	# *0x0010.NIT
+	if (m/^            Code_rate_HP_stream: (\d+) \((0x[[:xdigit:]]{2})\)  \[= (\S+)\]/) {
+		next if !$found->{frequency};
+		$db->{shared}{frequency}{$found->{frequency}}{code_rate_hp}=$3;
+		next;
+	}
+
+	# *0x0010.NIT
+	if (m/^            Code_rate_LP_stream: (\d+) \((0x[[:xdigit:]]{2})\)  \[= (\S+)\]/) {
+		next if !$found->{frequency};
+		$db->{shared}{frequency}{$found->{frequency}}{code_rate_lp}=$3;
+		next;
+	}
+
+	# *0x0010.NIT
+	if (m/^            Guard_interval: (\d+) \((0x[[:xdigit:]]{2})\)  \[= (\S+)\]/) {
+		next if !$found->{frequency};
+		$db->{shared}{frequency}{$found->{frequency}}{guard_interval}=$3;
+		next;
+	}
+
+	# *0x0010.NIT
+	if (m/^            Transmission_mode: (\d+) \((0x[[:xdigit:]]{2})\)  \[= (\S+) mode\]/) {
+		next if !$found->{frequency};
+		$db->{shared}{frequency}{$found->{frequency}}{transmission_mode}=$3;
+		delete $found->{frequency};
+		next;
+	}
+
 	# *0x0011.SDT
 	if (m/^    Service_id: (\d+) \((0x[[:xdigit:]]{4})\)/) {
 		$found->{program_number} = $2;
@@ -130,6 +187,13 @@ while (<>) {
 		delete $found->{program_number};
 
 		$db->{program}{$program_number}{Service_name}=$1;
+		next;
+	}
+
+	# *0x0010.NIT
+	# part of a DVB-DescriptorTag: 98 frequency_list_descriptor
+	if (m/^               Centre_frequency: ([[:xdigit:]]{8})  \(= (\d{6}.\d{3}) kHz\)/) {
+		$db->{shared}{frequency}{$2}{seen}++;
 		next;
 	}
 
