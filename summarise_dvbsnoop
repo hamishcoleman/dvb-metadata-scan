@@ -74,16 +74,19 @@ my $found={};
 while (<>) {
 	chomp;
 
+	# all files
 	if (m/^PID:\s(\d+)/) {
 		$found->{pid} = $1;
 		next;
 	}
 
+	# *0x0000.PAT
 	if (m/^    Program_number: (\d+) \((0x[[:xdigit:]]{4})\)/) {
 		$found->{program_number} = $2;
 		next;
 	}
 
+	# *0x0000.PAT
 	if (m/^    (Network_PID|Program_map_PID): (\d+) \((0x[[:xdigit:]]{4})\)/) {
 		my $pid = $3;
 
@@ -103,20 +106,25 @@ while (<>) {
 		next;
 	} 
 
+	# *0x0010.NIT
 	if (m/^        Network_name: "([^"]+)"/) {
 		$db->{global}{network_name}=$1;
 		next;
 	}
 
+	# *0x0011.SDT
 	if (m/^    Service_id: (\d+) \((0x[[:xdigit:]]{4})\)/) {
 		$found->{program_number} = $2;
 		next;
 	}
 
+	# *0x0011.SDT
 	if (m/^            service_provider_name: "([^"]+)"/) {
 		$db->{program}{$found->{program_number}}{Service_provider}=$1;
 		next;
 	}
+
+	# *0x0011.SDT
 	if (m/^            Service_name: "([^"]+)"/) {
 		my $program_number = $found->{program_number};
 		delete $found->{program_number};
@@ -125,11 +133,13 @@ while (<>) {
 		next;
 	}
 
+	# *.PMT
 	if (m/^Program_number: (\d+) \((0x[[:xdigit:]]{4})\)/) {
 		$found->{program_number} = $2;
 		next;
 	}
 
+	# *.PMT
 	if (m/^PCR PID: (\d+) \((0x[[:xdigit:]]{4})\)/) {
 		my $program_number = $found->{program_number};
 
@@ -139,16 +149,19 @@ while (<>) {
 		next;
 	}
 
+	# *.PMT
 	if (m/^    Stream_type: (\d+) \((0x[[:xdigit:]]{2})\)/) {
 		$found->{Stream_type}=$2;
 		next;
 	}
 
+	# *.PMT
 	if (m/^    Elementary_PID: (\d+) \((0x[[:xdigit:]]{4})\)/) {
 		$found->{Elementary_PID}=$2;
 		next;
 	}
 
+	# *.PMT (found in other files, but not with a found-> program,stream and pid)
 	if (m/^            (MPEG-DescriptorTag|DVB-DescriptorTag): (\d+) \((0x[[:xdigit:]]{2})\)/) {
 		my $program_number = $found->{program_number};
 		my $stream_type = $found->{Stream_type};
@@ -176,6 +189,7 @@ while (<>) {
 		next;
 	}
 
+	# *.PMT
 	if (m/^    ES_info_length: 0 /) {
 		my $program_number = $found->{program_number};
 		my $stream_type = $found->{Stream_type};
