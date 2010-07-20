@@ -79,11 +79,8 @@ my $found={};
 while (<>) {
 	chomp;
 
-	# all files
-	if (m/^PID:\s(\d+)/) {
-		$found->{pid} = $1;
-		next;
-	}
+	# TODO - read the ^PID: at the start of the file and mark that pid
+	# as seen in the db->
 
 	# *0x0000.PAT
 	if (m/^    Program_number: (\d+) \((0x[[:xdigit:]]{4})\)/) {
