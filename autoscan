@@ -40,7 +40,7 @@ dump_pid() {
 
 	echo LOG dump_pid $CHANNEL $PID $NAME >>$LOGFILE
 	OUT=scan.${CHANNEL}.pid${PID}${NAME}
-	dvbsnoop $PID -timeout 10000 -tn -ph 0 -n 1 -crc >$OUT
+	dvbsnoop $PID -timeout 10000 -tn -nohexdumpbuffer -n 1 -crc >$OUT
 
 	# Remove CRC as it will change every single time
 	perl -p -i -e 's/^CRC: \d+ \(0x[0-9A-Fa-f]+\)/CRC: __REMOVED__/' $OUT
