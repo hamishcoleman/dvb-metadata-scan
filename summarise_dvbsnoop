@@ -30,6 +30,19 @@ sub stream_type_to_str($) {
 	return undef;
 }
 
+sub lcn_process($$) {
+	my ($db,$hexlcn) = @_;
+
+	my @digits = split / /,$hexlcn;
+	my $service_id = '0x'.$digits[0].$digits[1];
+	my $lcn = hex($digits[2].$digits[3]) & 0x3ff;
+
+	$db->{program}{$service_id}{LCN}=$lcn;
+
+	$db->{shared}{LCN}{$lcn}{program} = $service_id;
+	$db->{shared}{LCN}{$lcn}{network} = 'FIXME';
+}
+
 sub add_type($$$) {
 	my ($db,$found,$type) = @_;
 
@@ -161,6 +174,21 @@ while (<>) {
 	# *0x0010.NIT, *0x0011.SDT *.PMT
 	if (m/^            DVB-DescriptorTag: (\d+)/) {
 		$found->{DVB_DescriptorTag} = $1;
+		next;
+	}
+
+	# *.NIT
+	if (defined $found->{DVB_DescriptorTag} &&
+	 $found->{DVB_DescriptorTag}==131 &&
+	 m/^                 ([[:xdigit:]]{4}):  ([0-9a-f ]+)   /) {
+		my $addr=$1;
+		my $hexstr=$2;
+		$hexstr =~ s/  +/ /g;
+		my $chunk;
+		while ($hexstr) {
+			$chunk = substr($hexstr,0,12,'');
+			lcn_process($db,$chunk);
+		}
 		next;
 	}
 
