@@ -221,8 +221,6 @@ while (<>) {
 
 		my $stream_type = $found->{Stream_type};
 		if ($stream_type) {
-			$db->{pid}{$pid}{Stream_type}=$stream_type;
-
 			my $type = stream_type_to_str($stream_type);
 			add_type($db,$found,$type);
 		}
