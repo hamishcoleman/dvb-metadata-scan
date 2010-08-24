@@ -260,8 +260,7 @@ while (<>) {
 	 $found->{DVB_DescriptorTag}==86 &&
 	 m/^               Teletext_type: (\d+) \((0x[[:xdigit:]]{2})\)/) {
 		if ($2 eq '0x02') {
-			# FIXME - 'subtitle'
-			add_type($db,$found,'teletext');
+			add_type($db,$found,'subtitle');
 		}
 		delete $found->{DVB_DescriptorTag};
 		next;
