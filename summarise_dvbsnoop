@@ -10,23 +10,8 @@ $Data::Dumper::Indent = 1;
 $Data::Dumper::Sortkeys = 1;
 $Data::Dumper::Quotekeys = 0;
 
-sub stream_type_to_str($$$) {
-	my ($stream_type,$desctag,$descriptor) = @_;
-
-# From the dvbsnoop output:
-# (0x02)  [= ITU-T Rec. H.262 | ISO/IEC 13818-2 Video | ISO/IEC 11172-2 constr. parameter video stream] 
-#	MPEG-DescriptorTag: 2 (0x02)  [= video_stream_descriptor]
-# (0x03)  [= ISO/IEC 11172 Audio]
-# (0x04)  [= ISO/IEC 13818-3 Audio]
-#	MPEG-DescriptorTag: 3 (0x03)  [= audio_stream_descriptor]
-# (0x05)  [= ITU-T Rec. H.222.0 | ISO/IEC 13818-1 private sections]
-#	MPEG-DescriptorTag: 15 (0x0f)  [= private_data_indicator_descriptor]
-#	DVB-DescriptorTag: 111 (0x6f)  [= application_signalling_descriptor]
-# (0x06)  [= ITU-T Rec. H.222.0 | ISO/IEC 13818-1 PES packets containing private data]
-#	DVB-DescriptorTag: 86 (0x56)  [= teletext_descriptor]
-#	DVB-DescriptorTag: 106 (0x6a)  [= AC3_descriptor]
-#	DVB-DescriptorTag: 195 (0xc3)  [= User defined]
-# (0x0b)  [= ISO/IEC 13818-6 DSM-CC U-N Messages]
+sub stream_type_to_str($) {
+	my ($stream_type) = @_;
 
 	if ($stream_type eq '0x02') {
 		return 'video';
@@ -37,33 +22,33 @@ sub stream_type_to_str($$$) {
 	if ($stream_type eq '0x04') {
 		return 'audio';
 	}
-	if ($stream_type eq '0x05') {
-		if ($descriptor eq '0x0f') {
-			return 'private_data';
-		}
-		if ($descriptor eq '0x6f') {
-			return 'application_signalling';
-		}
-		return undef;
-	}
-	if ($stream_type eq '0x06') {
-		if ($descriptor eq '0x56') {
-			return 'teletext';
-		}
-		if ($descriptor eq '0x6a') {
-			return 'AC3';
-		}
-		if ($descriptor eq '0xc3') {
-			return 'User_defined';
-		}
-		return undef;
-	}
 	if ($stream_type eq '0x0b') {
 		return 'DSM-CC';
 	}
+
+	# Else, need more information from a DescriptorTag
 	return undef;
 }
 
+sub add_type($$$) {
+	my ($db,$found,$type) = @_;
+
+	my $program_number = $found->{program_number};
+	my $stream_type = $found->{Stream_type};
+	my $pid = $found->{Elementary_PID};
+
+	return if !$pid or !$stream_type or !$program_number;
+
+	if ($type) {
+		$found->{type} = $type;
+		$db->{program}{$program_number}{pid}{$type}=$pid;
+		$db->{pid}{$pid}{usage}=$type;
+		delete $db->{program}{$program_number}{pid}{$stream_type};
+	} else {
+		$db->{program}{$program_number}{pid}{$stream_type}=$pid;
+		$db->{pid}{$pid}{usage}=$stream_type;
+	}
+}
 
 # Store our summary info
 my $db={};
@@ -173,6 +158,12 @@ while (<>) {
 		next;
 	}
 
+	# *0x0010.NIT, *0x0011.SDT *.PMT
+	if (m/^            DVB-DescriptorTag: (\d+)/) {
+		$found->{DVB_DescriptorTag} = $1;
+		next;
+	}
+
 	# *0x0011.SDT
 	if (m/^    Service_id: (\d+) \((0x[[:xdigit:]]{4})\)/) {
 		$found->{program_number} = $2;
@@ -220,41 +211,47 @@ while (<>) {
 
 	# *.PMT
 	if (m/^    Elementary_PID: (\d+) \((0x[[:xdigit:]]{4})\)/) {
-		$found->{Elementary_PID}=$2;
-		next;
-	}
+		my $pid = $2;
+		$found->{Elementary_PID}=$pid;
 
-	# *.PMT (found in other files, but not with a found-> program,stream and pid)
-	if (m/^            (MPEG-DescriptorTag|DVB-DescriptorTag): (\d+) \((0x[[:xdigit:]]{2})\)/) {
 		my $program_number = $found->{program_number};
+		if ($program_number) {
+			$db->{pid}{$pid}{programs}{$program_number}++;
+		}
+
 		my $stream_type = $found->{Stream_type};
-		my $pid = $found->{Elementary_PID};
+		if ($stream_type) {
+			$db->{pid}{$pid}{Stream_type}=$stream_type;
 
-		next if !$pid or !$stream_type or !$program_number;
-
-		# FIXME - this is wrong, since it doesnt handle multiple
-		# descriptortags overwriting each others details in db->
-
-		$db->{pid}{$pid}{programs}{$program_number}++;
-		$db->{pid}{$pid}{Stream_type}=$stream_type;
-		$db->{pid}{$pid}{DescriptorTag}=$3;
-
-		my $type = stream_type_to_str($stream_type,$1,$3);
-
-		if ($type) {
-			$db->{program}{$program_number}{pid}{$type}=$pid;
-			$db->{pid}{$pid}{usage}=$type;
-
-			delete $db->{program}{$program_number}{pid}{$stream_type};
-			delete $found->{Stream_type};
-		} else {
-			$db->{program}{$program_number}{pid}{$stream_type}=$pid;
-			$db->{pid}{$pid}{usage}=$stream_type;
+			my $type = stream_type_to_str($stream_type);
+			add_type($db,$found,$type);
 		}
 		next;
 	}
 
 	# *.PMT
+	if (defined $found->{DVB_DescriptorTag} &&
+	 $found->{DVB_DescriptorTag}==86 &&
+	 m/^               Teletext_type: (\d+) \((0x[[:xdigit:]]{2})\)/) {
+		if ($2 eq '0x02') {
+			# FIXME - 'subtitle'
+			add_type($db,$found,'teletext');
+		}
+		delete $found->{DVB_DescriptorTag};
+		next;
+	}
+
+	# *.PMT
+	if (defined $found->{DVB_DescriptorTag} &&
+	 $found->{DVB_DescriptorTag}==106 &&
+	 m/^            descriptor_length: (\d+) \((0x[[:xdigit:]]{2})\)/) {
+		add_type($db,$found,'AC3');
+		delete $found->{DVB_DescriptorTag};
+		next;
+	}
+
+	# *.PMT
+	# FIXME - "MPEG-DescriptorTag: 14"
 	if (m/^            maximum_bitrate: (\d+) \((0x[[:xdigit:]]{8})\)  \(= (\d+) Bytes\/sec\)/) {
 		my $pid = $found->{Elementary_PID};
 
