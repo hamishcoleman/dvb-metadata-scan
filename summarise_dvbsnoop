@@ -266,35 +266,6 @@ while (<>) {
 	}
 
 	# *.PMT
-	if (m/^    ES_info_length: 0 /) {
-		# TODO - this is not found in any current stream (20100720)
-		# is there a reason to keep it, what is it supposed to do?
-		my $program_number = $found->{program_number};
-		my $stream_type = $found->{Stream_type};
-		delete $found->{Stream_type};
-		my $pid = $found->{Elementary_PID};
-		delete $found->{Elementary_PID};
-
-		next if !$pid or !$stream_type or !$program_number;
-
-		$db->{pid}{$pid}{programs}{$program_number}++;
-		$db->{pid}{$pid}{Stream_type}=$stream_type;
-
-		my $type = stream_type_to_str($stream_type,undef,undef);
-
-		if ($type) {
-			$db->{program}{$program_number}{pid}{$type}=$pid;
-			$db->{pid}{$pid}{usage}=$type;
-
-			delete $db->{program}{$program_number}{pid}{$stream_type};
-		} else {
-			$db->{program}{$program_number}{pid}{$stream_type}=$pid;
-			$db->{pid}{$pid}{usage}=$stream_type;
-		}
-		next;
-	}
-
-	# *.PMT
 	if (m/^==========================================================/) {
 		# End of file, so empty the found cache
 		$found={}
