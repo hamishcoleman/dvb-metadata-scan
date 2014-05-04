@@ -3,16 +3,9 @@
 # This script is intended to autoscan all DVB services and produce text dump
 # output of the details found
 #
-# Currently only DVB-T and using hardcoded frequencies
+# Currently only DVB-T
 
-MULTIPLEXES=" \
-	abc1.free.au \
-	seven.free.au \
-	nine.free.au \
-	ten.free.au \
-	sbs.free.au \
-	c31.free.au \
-"
+MULTIPLEXES=$(cat channels.conf | cut -d: -f1 |sort |uniq)
 
 LOGFILE=autoscan.log
 >$LOGFILE
