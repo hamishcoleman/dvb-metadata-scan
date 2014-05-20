@@ -22,6 +22,7 @@ tzap_start() {
 tzap_stop() {
 	echo LOG tzap_stop >>$LOGFILE
 	kill $TZAP_PID
+	wait $TZAP_PID
 }
 
 dump_pid() {
@@ -68,7 +69,7 @@ scan_one() {
 		# TODO - read the PMT files and generate a channel PID list
 	done
 
-	./summarise_dvbsnoop scan.${CHANNEL}.pid* >scan.${CHANNEL}.summary
+	/home/hamish/s/src/xmltv/autoscan/summarise_dvbsnoop scan.${CHANNEL}.pid* >scan.${CHANNEL}.summary
 }
 
 multiplex() {
