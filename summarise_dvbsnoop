@@ -107,12 +107,14 @@ while (<>) {
 	} 
 
 	# *0x0010.NIT
+	# FIXME - DVB-DescriptorTag: 64 (0x40)
 	if (m/^        Network_name: "([^"]+)"/) {
 		$db->{global}{network_name}=$1;
 		next;
 	}
 
 	# *0x0010.NIT
+	# FIXME - DVB-DescriptorTag: 90 (0x5a)
 	# frequency we are listening to
 	if (m/^            Center frequency: (0x[[:xdigit:]]{8}) \(= (\d{6}.\d{3}) kHz\)/) {
 		$db->{global}{center_frequency}=$2;
@@ -122,6 +124,7 @@ while (<>) {
 	}
 
 	# *0x0010.NIT
+	# FIXME - DVB-DescriptorTag: 90 (0x5a)
 	if (m/^            Bandwidth: (\d+) \((0x[[:xdigit:]]{2})\)  \[= (\d+) MHz\]/) {
 		next if !$found->{frequency};
 		$db->{shared}{frequency}{$found->{frequency}}{bandwidth}=$3;
@@ -129,6 +132,7 @@ while (<>) {
 	}
 
 	# *0x0010.NIT
+	# FIXME - DVB-DescriptorTag: 90 (0x5a)
 	if (m/^            Constellation: (\d+) \((0x[[:xdigit:]]{2})\)  \[= (\S+)\]/) {
 		next if !$found->{frequency};
 		$db->{shared}{frequency}{$found->{frequency}}{constellation}=$3;
@@ -136,6 +140,7 @@ while (<>) {
 	}
 
 	# *0x0010.NIT
+	# FIXME - DVB-DescriptorTag: 90 (0x5a)
 	if (m/^            Code_rate_HP_stream: (\d+) \((0x[[:xdigit:]]{2})\)  \[= (\S+)\]/) {
 		next if !$found->{frequency};
 		$db->{shared}{frequency}{$found->{frequency}}{code_rate_hp}=$3;
@@ -143,6 +148,7 @@ while (<>) {
 	}
 
 	# *0x0010.NIT
+	# FIXME - DVB-DescriptorTag: 90 (0x5a)
 	if (m/^            Code_rate_LP_stream: (\d+) \((0x[[:xdigit:]]{2})\)  \[= (\S+)\]/) {
 		next if !$found->{frequency};
 		$db->{shared}{frequency}{$found->{frequency}}{code_rate_lp}=$3;
@@ -150,6 +156,7 @@ while (<>) {
 	}
 
 	# *0x0010.NIT
+	# FIXME - DVB-DescriptorTag: 90 (0x5a)
 	if (m/^            Guard_interval: (\d+) \((0x[[:xdigit:]]{2})\)  \[= (\S+)\]/) {
 		next if !$found->{frequency};
 		$db->{shared}{frequency}{$found->{frequency}}{guard_interval}=$3;
@@ -157,6 +164,7 @@ while (<>) {
 	}
 
 	# *0x0010.NIT
+	# FIXME - DVB-DescriptorTag: 90 (0x5a)
 	if (m/^            Transmission_mode: (\d+) \((0x[[:xdigit:]]{2})\)  \[= (\S+) mode\]/) {
 		next if !$found->{frequency};
 		$db->{shared}{frequency}{$found->{frequency}}{transmission_mode}=$3;
@@ -199,12 +207,14 @@ while (<>) {
 	}
 
 	# *0x0011.SDT
+	# FIXME - DVB-DescriptorTag: 72 (0x48)
 	if (m/^            service_provider_name: "([^"]+)"/) {
 		$db->{program}{$found->{program_number}}{Service_provider}=$1;
 		next;
 	}
 
 	# *0x0011.SDT
+	# FIXME - DVB-DescriptorTag: 72 (0x48)
 	if (m/^            Service_name: "([^"]+)"/) {
 		my $program_number = $found->{program_number};
 		delete $found->{program_number};
@@ -212,6 +222,9 @@ while (<>) {
 		$db->{program}{$program_number}{Service_name}=$1;
 		next;
 	}
+
+	# TODO - DVB-DescriptorTag: 115 (0x73)
+	#	(CRID://melbourneabcnews24.abc.net.au)
 
 	# *.PMT
 	if (m/^Program_number: (\d+) \((0x[[:xdigit:]]{4})\)/) {
