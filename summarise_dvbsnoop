@@ -14,9 +14,9 @@ sub stream_type_to_str($) {
 	my ($stream_type) = @_;
 
         my %map = (
-            '0x02' => 'video',
+            '0x02' => 'video(h262)',
             '0x03' => 'audio',
-            '0x04' => 'audio',
+            '0x04' => 'audio(0x04)',
             '0x0b' => 'DSM-CC',
         );
 
