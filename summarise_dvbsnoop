@@ -13,18 +13,17 @@ $Data::Dumper::Quotekeys = 0;
 sub stream_type_to_str($) {
 	my ($stream_type) = @_;
 
-	if ($stream_type eq '0x02') {
-		return 'video';
-	}
-	if ($stream_type eq '0x03') {
-		return 'audio';
-	}
-	if ($stream_type eq '0x04') {
-		return 'audio';
-	}
-	if ($stream_type eq '0x0b') {
-		return 'DSM-CC';
-	}
+        my %map = (
+            '0x02' => 'video',
+            '0x03' => 'audio',
+            '0x04' => 'audio',
+            '0x0b' => 'DSM-CC',
+        );
+
+        my $result = $map{$stream_type};
+        if ($result) {
+            return $result;
+        }
 
 	# Else, need more information from a DescriptorTag
 	return undef;
