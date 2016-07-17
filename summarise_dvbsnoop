@@ -17,7 +17,12 @@ sub stream_type_to_str($) {
             '0x02' => 'video(h262)',
             '0x03' => 'audio',
             '0x04' => 'audio(0x04)',
+            '0x05' => '0x05(private_sections)',
+            '0x06' => '0x06(private_data)',
             '0x0b' => 'DSM-CC',
+            '0x0c' => '0x0c(stream_13818_6_C)',
+            '0x11' => '0x11(stream_audio_latm)',
+            #0x1b  => FIXME, find out what this is
         );
 
         my $result = $map{$stream_type};
