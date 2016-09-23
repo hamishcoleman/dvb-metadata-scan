@@ -5,6 +5,8 @@
 #
 # Currently only DVB-T
 
+SCRIPTDIR=$(dirname $0)
+
 MULTIPLEXES=$(cat channels.conf | cut -d: -f1 |sort |uniq)
 
 LOGFILE=autoscan.log
@@ -69,7 +71,7 @@ scan_one() {
 		# TODO - read the PMT files and generate a channel PID list
 	done
 
-	/home/hamish/s/src/xmltv/autoscan/summarise_dvbsnoop scan.${CHANNEL}.pid* >scan.${CHANNEL}.summary
+	$SCRIPTDIR/summarise_dvbsnoop scan.${CHANNEL}.pid* >scan.${CHANNEL}.summary
 }
 
 multiplex() {

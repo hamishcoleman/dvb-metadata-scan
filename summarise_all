@@ -5,6 +5,8 @@
 #
 # Currently only DVB-T
 
+SCRIPTDIR=$(dirname $0)
+
 MULTIPLEXES=$(cat channels.conf | cut -d: -f1 |sort |uniq)
 
 LOGFILE=autoscan.log
@@ -13,7 +15,7 @@ LOGFILE=autoscan.log
 multiplex() {
 	local i="$1"
 	echo TRY $i
-	/home/hamish/s/src/xmltv/autoscan/summarise_dvbsnoop scan.${i}.pid* >scan.${i}.summary
+	$SCRIPTDIR/summarise_dvbsnoop scan.${i}.pid* >scan.${i}.summary
 }
 
 if [ -n "$1" ]; then
