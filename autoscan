@@ -93,3 +93,7 @@ for i in $MULTIPLEXES; do
 	multiplex "$i"
 done
 
+# Now get a slightly different view of things from the newer dvbv5 tools
+dvbv5-scan channels.dvbv5 -o channels.tmp
+$SCRIPTDIR/inisort channels.tmp >channels.dvbv5.out
+rm channels.tmp

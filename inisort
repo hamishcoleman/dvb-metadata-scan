@@ -1,0 +1,47 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+#
+# Read in the output from dvbv5-scan (which looks like an INI file) and
+# output it again with a known sort order
+#
+
+my $db = {};
+my $section;
+
+while (<>) {
+    chomp;
+
+    if (!$_) {
+        # skip blank lines
+        next;
+    }
+
+    if (m/^\[/) {
+        $section = $_;
+        next;
+    }
+
+    if (!defined($section)) {
+        warn("Variables before section header - skipping");
+        next;
+    }
+
+    if (m/^([^=]+)=(.*)$/) {
+        my $key = $1;
+        my $val = $2;
+
+        $db->{$section}{$key} = $val;
+        next;
+    }
+
+    die("Could not parse $_");
+}
+
+for my $section (sort(keys(%{$db}))) {
+    print($section,"\n");
+    for my $key (sort(keys(%{$db->{$section}}))) {
+        print($key,"=",$db->{$section}{$key},"\n");
+    }
+    print("\n");
+}
